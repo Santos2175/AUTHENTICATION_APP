@@ -7,6 +7,7 @@ import {
   handleForgotPassword,
   handleResetPassword,
   handleChangePassword,
+  handleLogout,
 } from '../controllers/auth.controller';
 
 const router = express.Router();
@@ -28,6 +29,6 @@ router.route('/reset-password').post(handleResetPassword);
 
 router.route('/change-password').post(handleChangePassword);
 
-// router.route('/logout').post(handleLogout);
+router.route('/logout').post(handleLogout);
 
 export default router;

@@ -104,6 +104,9 @@ export const handleLogin = async (
 
     const refreshToken = generateToken(payload, 'refreshToken');
 
+    // update user with accesstoken and refresh token
+    await user.updateOne({ $set: { accessToken, refreshToken } });
+
     res.status(200).json({
       success: true,
       message: 'User logged in successfully',
@@ -350,6 +353,32 @@ export const handleChangePassword = async (
     res
       .status(200)
       .json({ success: true, message: `Password changed successfully.` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// logout handler
+export const handleLogout = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    // check if user exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ success: false, error: `User not found.` });
+      return;
+    }
+
+    await user.updateOne({ $set: { accessToken: null, refreshToken: null } });
+
+    res
+      .status(200)
+      .json({ success: true, message: `User logged out successfully` });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
