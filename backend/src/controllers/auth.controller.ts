@@ -236,3 +236,47 @@ export const handleResendOTP = async (
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// forgot password handler
+export const handleForgotPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    // check if user with email exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res
+        .status(404)
+        .json({ success: false, error: `User with email ${email} not found` });
+      return;
+    }
+
+    // generate OTP and OTP expiry time
+    const OTPCode = await generateUniqueOTP(6);
+    const OTPExpiry = generateOTPExpiryTime();
+
+    // send email
+    const to = email;
+    const subject = 'Reset Password';
+    const type = 'resetPassword';
+    const context = {
+      fullName: user.fullName,
+      OTPCode,
+    };
+
+    sendEmail({ to, subject, type, context });
+
+    // update user with otp code and otp expiry
+    await user.updateOne({ $set: { OTPCode, OTPExpiry } });
+
+    res
+      .status(200)
+      .json({ success: true, message: `OTP sent to your email. Verify it.` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
