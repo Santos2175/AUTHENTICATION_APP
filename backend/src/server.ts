@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 
 import { connectToMongoDB } from './config/db.js';
+import apiRoutes from './routes/index.js';
 
 dotenv.config();
 
@@ -15,9 +16,7 @@ const app = express();
 app.use(express.json());
 
 // api routes
-app.get('/', async (req, res) => {
-  res.send('Hello');
-});
+app.use('/api/v1', apiRoutes);
 
 app.listen(PORT, () => {
   connectToMongoDB();
