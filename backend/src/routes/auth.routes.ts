@@ -5,6 +5,7 @@ import {
   handleVerifyOTP,
   handleResendOTP,
   handleForgotPassword,
+  handleResetPassword,
 } from '../controllers/auth.controller';
 
 const router = express.Router();
@@ -22,7 +23,7 @@ router.route('/resend-otp').post(handleResendOTP);
 
 router.route('/forgot-password').post(handleForgotPassword);
 
-// router.route('/reset-password').post(handleResetPassword);
+router.route('/reset-password').post(handleResetPassword);
 
 // router.route('/change-password').post(handleChangePassword);
 

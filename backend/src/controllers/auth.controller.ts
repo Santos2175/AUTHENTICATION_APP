@@ -280,3 +280,38 @@ export const handleForgotPassword = async (
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// reset password handler
+export const handleResetPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email, OTPCode, newPassword } = req.body;
+
+    // check if user with email exists
+    const user = await User.findOne({ email, OTPCode });
+
+    if (!user) {
+      res.status(404).json({ success: false, error: `User not found` });
+      return;
+    }
+
+    if (!user.isEmailVerified) {
+      await user.updateOne({ isEmailVerified: true });
+    }
+
+    // hash new password
+    const hashedPassword = await hashPassword(newPassword);
+
+    await user.updateOne({
+      $set: { OTPCode: null, OTPExpiry: null, password: hashedPassword },
+    });
+
+    res
+      .status(200)
+      .json({ success: true, message: `Password reset successfully.` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
