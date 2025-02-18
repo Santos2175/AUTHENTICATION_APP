@@ -3,6 +3,8 @@ import User from '../models/user.model';
 import { UserRole } from '../interface/user';
 import { comparePassword, hashPassword } from '../utils/password';
 import { generateToken } from '../utils/token';
+import { generateOTPExpiryTime, generateUniqueOTP } from '../utils/otp';
+import { sendEmail } from '../utils/sendEmail';
 
 // user register handler
 export const handleRegisterUser = async (
@@ -27,7 +29,7 @@ export const handleRegisterUser = async (
     const hashedPassword = await hashPassword(password);
 
     //create user
-    await User.create({
+    const user = await User.create({
       fullName,
       email,
       gender,
@@ -35,9 +37,30 @@ export const handleRegisterUser = async (
       password: hashedPassword,
     });
 
+    // generat otp and otp expiry time
+    const OTPCode = await generateUniqueOTP(6);
+    const OTPExpiry = generateOTPExpiryTime();
+
+    // send email
+    const to = user.email;
+    const subject = 'Email Verification';
+    const type = 'emailVerification';
+    const context = {
+      fullName,
+      OTPCode,
+    };
+
+    sendEmail({ to, subject, type, context });
+
+    // update user with otp code and otp expiry time
+    await user.updateOne({ $set: { OTPCode, OTPExpiry } });
+
     res
       .status(201)
-      .json({ success: true, message: `User registered successfully` });
+      .json({
+        success: true,
+        message: `User registered successfully. Please check your email to verify OTP`,
+      });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
