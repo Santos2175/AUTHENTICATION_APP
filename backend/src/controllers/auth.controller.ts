@@ -315,3 +315,42 @@ export const handleResetPassword = async (
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// change password handler
+export const handleChangePassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+
+    // check if user with email exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({ success: false, error: `User not found` });
+      return;
+    }
+
+    // check if current password is correct
+    const isMatched = await comparePassword(currentPassword, user.password);
+
+    if (!isMatched) {
+      res
+        .status(400)
+        .json({ success: false, error: `Incorrect current password` });
+      return;
+    }
+
+    // if password matches then hash new password and save
+    const hashedPassword = await hashPassword(newPassword);
+
+    await user.updateOne({ $set: { password: hashedPassword } });
+
+    res
+      .status(200)
+      .json({ success: true, message: `Password changed successfully.` });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
