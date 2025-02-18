@@ -190,3 +190,49 @@ export const handleVerifyOTP = async (
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// resend OTP code handler
+export const handleResendOTP = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    // check if user with email exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: `User with email: ${email} does not exist.`,
+      });
+      return;
+    }
+
+    // generate OTP and OTP expiry time
+    const OTPCode = await generateUniqueOTP(6);
+    const OTPExpiry = generateOTPExpiryTime();
+
+    // for email
+    const to = email;
+    const subject = 'Verify OTP';
+    const type = 'verifyOTP';
+    const context = {
+      fullName: user.fullName,
+      OTPCode,
+    };
+
+    sendEmail({ to, subject, type, context });
+
+    // update user
+    await user.updateOne({ $set: { OTPCode, OTPExpiry } });
+
+    res.status(200).json({
+      success: true,
+      message: `OTP sent to your email. Please verify it.`,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

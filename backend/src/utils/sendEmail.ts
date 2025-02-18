@@ -25,6 +25,9 @@ export const sendEmail = async ({
       resetPassword: {
         templateFile: 'resetPassword.hbs',
       },
+      verifyOTP: {
+        templateFile: 'verifyOTP.hbs',
+      },
     };
 
     const config = defaultConfig[type];
