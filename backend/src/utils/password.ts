@@ -13,11 +13,11 @@ export const hashPassword = async (password: string): Promise<string> => {
 
 // comparing password utility
 export const comparePassword = async (
-  currentPassword: string,
-  inputPassword: string
+  inputPassword: string,
+  registeredPassword: string
 ): Promise<boolean> => {
   try {
-    return bcrypt.compare(currentPassword, inputPassword);
+    return bcrypt.compare(inputPassword, registeredPassword);
   } catch (error: any) {
     throw new Error('Error Comparing password');
   }
