@@ -2,6 +2,7 @@ import express from 'express';
 import {
   handleRegisterUser,
   handleLogin,
+  handleVerifyOTP,
 } from '../controllers/auth.controller';
 
 const router = express.Router();
@@ -11,7 +12,7 @@ router.route('/register').post(handleRegisterUser);
 
 router.route('/login').post(handleLogin);
 
-// router.route('/verify-otp').post(handleVerifyOTP);
+router.route('/verify-otp').post(handleVerifyOTP);
 
 // router.route('/resend-otp').post(handleResendOTP);
 

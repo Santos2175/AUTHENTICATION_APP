@@ -55,12 +55,10 @@ export const handleRegisterUser = async (
     // update user with otp code and otp expiry time
     await user.updateOne({ $set: { OTPCode, OTPExpiry } });
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: `User registered successfully. Please check your email to verify OTP`,
-      });
+    res.status(201).json({
+      success: true,
+      message: `User registered successfully. Please check your email to verify OTP`,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -90,10 +88,16 @@ export const handleLogin = async (
       return;
     }
 
-    // todo check if email is verified
+    //check if email is verified
+    if (!user.isEmailVerified) {
+      res.status(401).json({
+        success: false,
+        error: `Email is not verified. Please verify it`,
+      });
+      return;
+    }
 
     // if everything is correct then generate tokens and login
-
     const payload = { _id: user._id.toString(), role: user.role };
 
     const accessToken = generateToken(payload, 'accessToken');
@@ -106,6 +110,82 @@ export const handleLogin = async (
       accessToken,
       refreshToken,
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// verify otp handler
+export const handleVerifyOTP = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { OTPCode, email, action } = req.body;
+
+    // check if user with email exists
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: `User with given email doesn't exist.`,
+      });
+      return;
+    }
+
+    // check if the OTP is correct
+    if (OTPCode !== user.OTPCode) {
+      res.status(400).json({ success: false, error: `Invalid OTP code` });
+      return;
+    }
+
+    // check if OTP is expired
+    const currentTime = new Date();
+    const OTPExpirationTime = new Date(user.OTPExpiry);
+
+    if (currentTime > OTPExpirationTime) {
+      res.status(400).json({
+        success: false,
+        error: `OTP Expired. Please request new one.`,
+      });
+      return;
+    }
+
+    // check action and follow the desired procedure
+    switch (action) {
+      case 'verifyEmail':
+        if (user.isEmailVerified) {
+          res
+            .status(400)
+            .json({ success: false, error: `Email is already verified.` });
+          return;
+        }
+
+        // verify email and update it
+        await user.updateOne({
+          OTPCode: null,
+          OTPExpiry: null,
+          isEmailVerified: true,
+        });
+
+        res
+          .status(200)
+          .json({ success: true, message: 'Email verified successfully.' });
+        return;
+
+      case 'resetPassword':
+        res.status(200).json({
+          success: true,
+          message: 'OTP verified. Proceed to change password',
+          OTPCode,
+          email,
+        });
+        return;
+
+      default:
+        res.status(400).json({ success: false, error: `Invalid action` });
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
